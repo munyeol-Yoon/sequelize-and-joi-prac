@@ -2,7 +2,7 @@ const express = require("express");
 const joi = require("joi");
 
 const authMiddleware = require("../middlewares/auth-middleware");
-const { Posts } = require("../models");
+const { Posts, Users } = require("../models");
 const { createPostValidation } = require("../validation/validation");
 
 const router = express.Router();
@@ -38,7 +38,32 @@ router.post("/", authMiddleware, async (req, res) => {
 
 // 게시글 전체 조회 api
 router.get("/", async (req, res) => {
-  res.send("게시글 전체 조회");
+  try {
+    const findPosts = await Posts.findAll({
+      attributes: ["postId", "userId", "title", "createdAt", "updatedAt"],
+      include: [
+        {
+          model: Users,
+          attributes: ["nickname"],
+        },
+      ],
+    });
+
+    const posts = findPosts.map((post) => {
+      return {
+        postId: post.postId,
+        userId: post.userId,
+        nickname: post.User.nickname,
+        title: post.title,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+      };
+    });
+
+    return res.status(200).json({ posts: posts });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
 // 게시글 상세 조회 api
