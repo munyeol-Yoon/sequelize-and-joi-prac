@@ -79,6 +79,10 @@ router.get("/:postId", async (req, res) => {
       ],
     });
 
+    if (!findPost) {
+      res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." });
+    }
+
     const post = {
       postId: findPost.postId,
       userId: findPost.userId,
@@ -140,7 +144,41 @@ router.put("/:postId", authMiddleware, async (req, res) => {
 
 // 게시글 삭제 api
 router.delete("/:postId", authMiddleware, async (req, res) => {
-  res.send("게시글 삭제");
+  try {
+    const { postId } = req.params;
+    const { userId } = res.locals.user;
+
+    const findPost = await Posts.findOne({
+      where: { postId },
+    });
+
+    if (!findPost) {
+      return res
+        .status(404)
+        .json({ errorMessage: "해당 게시글이 존재하지 않습니다." });
+    }
+    if (findPost.userId !== userId) {
+      return res
+        .status(403)
+        .json({ errorMessage: "게시글의 삭제 권한이 존재하지 않습니다." });
+    }
+
+    const deleteUser = await Posts.destroy({
+      where: {
+        [Op.and]: [{ userId }, { postId }],
+      },
+    });
+
+    if (!deleteUser) {
+      return res
+        .status(400)
+        .json({ errorMessage: "게시글이 정상적으로 삭제되지 않았습니다." });
+    }
+
+    return res.status(200).json({ message: "게시글을 삭제하였습니다." });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
 module.exports = router;
