@@ -68,7 +68,32 @@ router.get("/", async (req, res) => {
 
 // 게시글 상세 조회 api
 router.get("/:postId", async (req, res) => {
-  res.send("게시글 상세 조회");
+  try {
+    const { postId } = req.params;
+    const findPost = await Posts.findOne({
+      where: { postId },
+      attributes: ["postId", "userId", "title", "createdAt", "updatedAt"],
+      include: [
+        {
+          model: Users,
+          attributes: ["nickname"],
+        },
+      ],
+    });
+
+    const post = {
+      postId: findPost.postId,
+      userId: findPost.userId,
+      nickname: findPost.User.nickname,
+      title: findPost.title,
+      createdAt: findPost.createdAt,
+      updatedAt: findPost.updatedAt,
+    };
+
+    return res.status(200).json({ posts: post });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
 // 게시글 수정 api
