@@ -23,7 +23,7 @@ const loginValidadtion = Joi.object({
   }),
 });
 
-const createPostValidation = Joi.object({
+const postValidation = Joi.object({
   title: Joi.string().not("").required().messages({
     "any.required": "데이터 형식이 올바르지 않습니다.",
     "any.invalid": "데이터 형식이 올바르지 않습니다.",
@@ -39,5 +39,5 @@ const createPostValidation = Joi.object({
 module.exports = {
   signupValidation,
   loginValidadtion,
-  createPostValidation,
+  postValidation,
 };

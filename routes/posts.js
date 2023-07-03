@@ -1,18 +1,16 @@
 const express = require("express");
-const joi = require("joi");
 
 const authMiddleware = require("../middlewares/auth-middleware");
 const { Posts, Users } = require("../models");
-const { createPostValidation } = require("../validation/validation");
+const { postValidation } = require("../validation/validation");
+const { Op } = require("sequelize");
 
 const router = express.Router();
 
 // 게시글 생성 api
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { title, content } = await createPostValidation.validateAsync(
-      req.body
-    );
+    const { title, content } = await postValidation.validateAsync(req.body);
     const { userId } = res.locals.user;
 
     const createPost = await Posts.create({
@@ -27,7 +25,7 @@ router.post("/", authMiddleware, async (req, res) => {
         .json({ errorMessage: "게시글 작성에 실패했습니다." });
     }
 
-    res.status(201).json({ message: "게시글 작성에 성공하였습니다. " });
+    return res.status(201).json({ message: "게시글 작성에 성공하였습니다. " });
   } catch (err) {
     if (err.isJoi) {
       return res.status(412).json({ errorMessage: err.details[0].message });
@@ -37,7 +35,7 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 // 게시글 전체 조회 api
-router.get("/", async (req, res) => {
+router.get("/", async (_, res) => {
   try {
     const findPosts = await Posts.findAll({
       attributes: ["postId", "userId", "title", "createdAt", "updatedAt"],
@@ -97,12 +95,51 @@ router.get("/:postId", async (req, res) => {
 });
 
 // 게시글 수정 api
-router.put("/:postId", async (req, res) => {
-  res.send("게시글 수정");
+router.put("/:postId", authMiddleware, async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { title, content } = await postValidation.validateAsync(req.body);
+    const { userId } = res.locals.user;
+
+    const existPost = await Posts.findOne({
+      where: { postId },
+    });
+
+    if (!existPost) {
+      return res
+        .status(404)
+        .json({ errorMessage: "해당 게시글이 존재하지 않습니다." });
+    }
+
+    const updatePost = await Posts.update(
+      {
+        title,
+        content,
+      },
+      {
+        where: {
+          [Op.and]: [{ userId }, { postId }],
+        },
+      }
+    );
+
+    if (!updatePost) {
+      return res
+        .status(400)
+        .json({ errorMessage: "게시글 수정에 실패하였습니다" });
+    }
+
+    return res.status(200).json({ message: "게시글을 수정하였습니다." });
+  } catch (err) {
+    if (err.isJoi) {
+      return res.status(412).json({ errorMessage: err.details[0].message });
+    }
+    console.error(err);
+  }
 });
 
 // 게시글 삭제 api
-router.delete("/:postId", async (req, res) => {
+router.delete("/:postId", authMiddleware, async (req, res) => {
   res.send("게시글 삭제");
 });
 
