@@ -1,8 +1,11 @@
 const express = require("express");
+
+const authMiddleware = require("../middlewares/auth-middleware");
+
 const router = express.Router();
 
 // 게시글 생성 api
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   res.send("게시글 생성");
 });
 
