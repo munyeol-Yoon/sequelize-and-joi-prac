@@ -23,7 +23,21 @@ const loginValidadtion = Joi.object({
   }),
 });
 
+const createPostValidation = Joi.object({
+  title: Joi.string().not("").required().messages({
+    "any.required": "데이터 형식이 올바르지 않습니다.",
+    "any.invalid": "데이터 형식이 올바르지 않습니다.",
+    "string.empty": "게시글 내용의 형식이 올바르지 않습니다.",
+  }),
+  content: Joi.string().not("").required().messages({
+    "any.required": "데이터 형식이 올바르지 않습니다.",
+    "any.invalid": "데이터 형식이 올바르지 않습니다.",
+    "string.empty": "게시글 내용의 형식이 올바르지 않습니다.",
+  }),
+});
+
 module.exports = {
   signupValidation,
   loginValidadtion,
+  createPostValidation,
 };
